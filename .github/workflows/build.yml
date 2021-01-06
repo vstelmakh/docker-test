@@ -1,0 +1,30 @@
+name: build
+
+on:
+    push:
+
+env:
+    DOCKER_REGISTRY: ghcr.io # github registry https://github.com/features/packages
+    DOCKER_REPOSITORY: vstelmakh/reponame
+    DOCKER_VERSION: ${{ github.sha }}
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Git checkout
+                uses: actions/checkout@v2
+
+            -   name: Build image
+#                env:
+#                    IMAGE_TAG: ${{ github.sha }}
+                run: |
+                    docker build --target alpine_test2 \
+                        -t alpine_test \
+                        -t $DOCKER_REGISTRY/$DOCKER_REPOSITORY:$DOCKER_VERSION \
+                        docker
+                    docker images
+
+            -   name: Run image
+                run: |
+                    docker run alpine_test sh -c 'echo "It works!"'
