@@ -1,0 +1,13 @@
+version: "3.4"
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile
+            target: nginx_test
+        image: nginx_test
+        ports:
+            - 80:80
+        environment:
+            - TZ

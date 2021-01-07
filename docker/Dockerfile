@@ -1,6 +1,6 @@
-FROM alpine:latest AS alpine_test
-RUN mkdir /app
-WORKDIR /app
-
-FROM alpine_test AS alpine_test2
-RUN touch index.html
+FROM nginx:stable AS nginx_test
+WORKDIR /usr/share/nginx/html
+RUN echo -n "Long running process..." \
+    && sleep 10 \
+    && echo " done"
+RUN echo "It works!" > index.html

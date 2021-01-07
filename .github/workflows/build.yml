@@ -4,9 +4,9 @@ on:
     push:
 
 env:
-    DOCKER_REGISTRY: ghcr.io # github registry https://github.com/features/packages
-    DOCKER_REPOSITORY: vstelmakh/reponame
-    DOCKER_VERSION: ${{ github.sha }}
+    REGISTRY: ghcr.io # github registry https://github.com/features/packages
+    REPOSITORY: vstelmakh/reponame
+    VERSION: ${{ github.sha }}
 
 jobs:
     build:
@@ -15,16 +15,17 @@ jobs:
             -   name: Git checkout
                 uses: actions/checkout@v2
 
-            -   name: Build image
-#                env:
-#                    IMAGE_TAG: ${{ github.sha }}
-                run: |
-                    docker build --target alpine_test2 \
-                        -t alpine_test \
-                        -t $DOCKER_REGISTRY/$DOCKER_REPOSITORY:$DOCKER_VERSION \
-                        docker
-                    docker images
+            -   name: Build and run
+                run: docker-compose up --build -d
 
-            -   name: Run image
+            -   name: List images
+                run: docker images
+
+            -   name: Test
                 run: |
-                    docker run alpine_test sh -c 'echo "It works!"'
+                    if curl -s http://localhost/ | grep -q "It works!"; then
+                        echo "OK"
+                    else
+                        echo "ERROR"
+                        exit 1
+                    fi
