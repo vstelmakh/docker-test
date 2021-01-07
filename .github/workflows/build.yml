@@ -3,20 +3,41 @@ name: build
 on:
     push:
 
-env:
 # https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions
-#    PERSONAL_ACCESS_TOKEN: set up in repository secrets
+env:
+    # PERSONAL_ACCESS_TOKEN: set up in repository secrets
     REGISTRY: ghcr.io # github registry https://github.com/features/packages
     REPOSITORY: ${{ github.repository }}
-    IMAGE_NGINX: nginx_test
-#    VERSION: latest
-#    VERSION: ${{ github.sha }}
-#    $GITHUB_SHA
 
 jobs:
     build:
         runs-on: ubuntu-latest
         steps:
+            -   name: Prepare env variables
+                run: |
+                    if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+                        IS_IMAGE_PUSH=true
+                        VERSION=latest
+                        VERSION_BASE=$VERSION
+                    elif [[ $GITHUB_REF == 'refs/heads/production' ]]; then
+                        IS_IMAGE_PUSH=true
+                        VERSION=stable
+                        VERSION_BASE=$VERSION
+                    elif [[ $GITHUB_REF == refs/tags/v* ]]; then
+                        IS_IMAGE_PUSH=true
+                        VERSION=${GITHUB_REF#refs/tags/v}
+                        VERSION_BASE=stable
+                    else
+                        IS_IMAGE_PUSH=false
+                        VERSION=${GITHUB_SHA::8}
+                        VERSION_BASE=latest
+                    fi
+                    echo "VERSION=$VERSION" >> $GITHUB_ENV
+                    echo "VERSION_BASE=$VERSION_BASE" >> $GITHUB_ENV
+                    echo "IS_IMAGE_PUSH=$IS_IMAGE_PUSH" >> $GITHUB_ENV
+                    echo "IMAGE_NGINX=$REGISTRY/$REPOSITORY/nginx_test" >> $GITHUB_ENV
+                # See: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#environment-files
+
             -   name: Git checkout
                 uses: actions/checkout@v2
 
@@ -26,13 +47,12 @@ jobs:
 
             -   name: Build nginx
                 run: |
-                    docker pull $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest || echo "Image not found in registry"
+                    docker pull $IMAGE_NGINX:$VERSION_BASE || echo "Base image not found in registry"
                     docker build . \
                         --file docker/Dockerfile \
                         --target nginx_test \
-                        --cache-from $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest \
-                        --tag $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest
-                    docker tag $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest $REGISTRY/$REPOSITORY/$IMAGE_NGINX:0.1.0
+                        --cache-from $IMAGE_NGINX:$VERSION_BASE \
+                        --tag $IMAGE_NGINX:$VERSION
 
             -   name: List images
                 run: docker images
@@ -49,7 +69,7 @@ jobs:
                         exit 1
                     fi
 
-            -   name: Push images
-                if: github.ref == 'refs/heads/master'
+            -   name: Push images (${{ env.VERSION }})
+                if: env.IS_IMAGE_PUSH == 'true'
                 run: |
-                    docker push $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest
+                    docker push $IMAGE_NGINX:$VERSION

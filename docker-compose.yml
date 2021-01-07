@@ -6,7 +6,7 @@ services:
             context: .
             dockerfile: ./docker/Dockerfile
             target: nginx_test
-        image: $REGISTRY/$REPOSITORY/$IMAGE_NGINX
+        image: $IMAGE_NGINX:$VERSION
         ports:
             - 80:80
         environment:
