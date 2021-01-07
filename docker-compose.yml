@@ -6,6 +6,7 @@ services:
             context: .
             dockerfile: ./docker/Dockerfile
             target: nginx_test
+        # image env variables defined in build workflow
         image: $IMAGE_NGINX:$VERSION
         ports:
             - 80:80
