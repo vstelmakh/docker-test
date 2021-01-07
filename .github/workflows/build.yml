@@ -4,9 +4,14 @@ on:
     push:
 
 env:
+# https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions
+#    PERSONAL_ACCESS_TOKEN: set up in repository secrets
     REGISTRY: ghcr.io # github registry https://github.com/features/packages
-    REPOSITORY: vstelmakh/reponame
-    VERSION: ${{ github.sha }}
+    REPOSITORY: ${{ github.repository }}
+    IMAGE_NGINX: nginx_test
+#    VERSION: latest
+#    VERSION: ${{ github.sha }}
+#    $GITHUB_SHA
 
 jobs:
     build:
@@ -15,11 +20,25 @@ jobs:
             -   name: Git checkout
                 uses: actions/checkout@v2
 
-            -   name: Build and run
-                run: docker-compose up --build -d
+            -   name: Docker login
+                run: echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
+                # Secrets managed in repo configuration
+
+            -   name: Build nginx
+                run: |
+                    docker pull $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest || echo "Image not found in registry"
+                    docker build . \
+                        --file docker/Dockerfile \
+                        --target nginx_test \
+                        --cache-from $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest \
+                        --tag $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest
+                    docker tag $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest $REGISTRY/$REPOSITORY/$IMAGE_NGINX:0.1.0
 
             -   name: List images
                 run: docker images
+
+            -   name: Run
+                run: docker-compose up -d
 
             -   name: Test
                 run: |
@@ -29,3 +48,7 @@ jobs:
                         echo "ERROR"
                         exit 1
                     fi
+
+            -   name: Push images
+                run: |
+                    docker push $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest
