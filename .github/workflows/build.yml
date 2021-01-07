@@ -50,5 +50,6 @@ jobs:
                     fi
 
             -   name: Push images
+                if: github.ref == 'refs/heads/master'
                 run: |
                     docker push $REGISTRY/$REPOSITORY/$IMAGE_NGINX:latest
