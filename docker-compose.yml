@@ -1,12 +1,22 @@
 version: "3.4"
 
 services:
+    php:
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile
+            target: php
+        # Image env variables defined in build workflow
+        image: $IMAGE_PHP:$VERSION
+        environment:
+            - TZ
+
     nginx:
         build:
             context: .
             dockerfile: ./docker/Dockerfile
-            target: nginx_test
-        # image env variables defined in build workflow
+            target: nginx
+        # Image env variables defined in build workflow
         image: $IMAGE_NGINX:$VERSION
         ports:
             - 80:80
