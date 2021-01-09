@@ -40,6 +40,13 @@ jobs:
             -   name: Git checkout
                 uses: actions/checkout@v2
 
+            -   name: Cache Composer dependencies
+                uses: actions/cache@v2
+                with:
+                    path: app/vendor
+                    key: composer-vendor-dir-${{ hashFiles('app/composer.lock') }}
+                    restore-keys: composer-vendor-dir-
+
             -   name: Docker login
                 run: echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
                 # PERSONAL_ACCESS_TOKEN used as password to github registry. Secrets managed in repository configuration.
