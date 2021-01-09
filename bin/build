@@ -84,6 +84,7 @@ docker run --rm -e UID=$UID -v $PWD/app:/app $IMAGE_PHP_BASE:$VERSION bash -c "\
     && su www-data -c 'composer install --prefer-dist --no-progress --no-interaction --no-scripts --no-autoloader'"
 
 # Build php production image
+docker pull $IMAGE_PHP_PROD:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_PROD:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
     --target php_prod \
@@ -92,6 +93,7 @@ docker build . \
     --tag $IMAGE_PHP_PROD:$VERSION
 
 # Build php dev image
+docker pull $IMAGE_PHP_DEV:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_DEV:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
     --target php_dev \
@@ -101,6 +103,7 @@ docker build . \
     --tag $IMAGE_PHP_DEV:$VERSION
 
 # Build nginx image
+docker pull $IMAGE_NGINX:$VERSION_BASE || echo "Base image \"$IMAGE_NGINX:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/nginx/Dockerfile \
     --target nginx \
