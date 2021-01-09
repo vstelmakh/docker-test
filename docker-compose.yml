@@ -1,12 +1,15 @@
 version: "3.4"
 
 services:
+    php:
+        image: ghcr.io/vstelmakh/docker-test/php_prod:${VERSION:-latest}
+        environment:
+            - TZ
+
     nginx:
-        build:
-            context: .
-            dockerfile: ./docker/Dockerfile
-            target: nginx_test
-        image: $IMAGE_NGINX:$VERSION
+        image: ghcr.io/vstelmakh/docker-test/nginx:${VERSION:-latest}
+        depends_on:
+            - php
         ports:
             - 80:80
         environment:

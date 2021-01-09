@@ -3,9 +3,9 @@ name: build
 on:
     push:
 
+# Context and expression syntax for GitHub Actions
 # https://docs.github.com/en/free-pro-team@latest/actions/reference/context-and-expression-syntax-for-github-actions
 env:
-    # PERSONAL_ACCESS_TOKEN: set up in repository secrets
     REGISTRY: ghcr.io # github registry https://github.com/features/packages
     REPOSITORY: ${{ github.repository }}
 
@@ -35,24 +35,24 @@ jobs:
                     echo "VERSION=$VERSION" >> $GITHUB_ENV
                     echo "VERSION_BASE=$VERSION_BASE" >> $GITHUB_ENV
                     echo "IS_IMAGE_PUSH=$IS_IMAGE_PUSH" >> $GITHUB_ENV
-                    echo "IMAGE_NGINX=$REGISTRY/$REPOSITORY/nginx_test" >> $GITHUB_ENV
-                # See: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#environment-files
+                # see: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#environment-files
 
             -   name: Git checkout
                 uses: actions/checkout@v2
 
+            -   name: Cache Composer dependencies
+                uses: actions/cache@v2
+                with:
+                    path: app/vendor
+                    key: composer-vendor-dir-${{ hashFiles('app/composer.lock') }}
+                    restore-keys: composer-vendor-dir-
+
             -   name: Docker login
                 run: echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
-                # Secrets managed in repo configuration
+                # PERSONAL_ACCESS_TOKEN used as password to github registry. Secrets managed in repository configuration.
 
-            -   name: Build nginx
-                run: |
-                    docker pull $IMAGE_NGINX:$VERSION_BASE || echo "Base image not found in registry"
-                    docker build . \
-                        --file docker/Dockerfile \
-                        --target nginx_test \
-                        --cache-from $IMAGE_NGINX:$VERSION_BASE \
-                        --tag $IMAGE_NGINX:$VERSION
+            -   name: Build images
+                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE
 
             -   name: List images
                 run: docker images
@@ -71,5 +71,4 @@ jobs:
 
             -   name: Push images (${{ env.VERSION }})
                 if: env.IS_IMAGE_PUSH == 'true'
-                run: |
-                    docker push $IMAGE_NGINX:$VERSION
+                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE --push
