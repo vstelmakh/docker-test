@@ -1,4 +1,4 @@
-FROM php:7.4-fpm AS php
+FROM php:7.4-fpm AS php_base
 
 RUN apt-get update \
     && apt-get install -y \
@@ -21,7 +21,7 @@ WORKDIR /app
 
 #--------------------------------------------------#
 
-FROM php as php_prod
+FROM php_base as php_prod
 
 COPY --chown=www-data:www-data ./app /app
 
@@ -30,7 +30,7 @@ RUN composer install --prefer-dist --no-progress --no-interaction --no-dev --opt
 
 #--------------------------------------------------#
 
-FROM php AS php_dev
+FROM php_base AS php_dev
 
 RUN touch test.txt
 

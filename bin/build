@@ -96,7 +96,7 @@ echo "# PHP (base)"
 docker pull $IMAGE_PHP_BASE:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_BASE:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
-    --target php \
+    --target php_base \
     --cache-from $IMAGE_PHP_BASE:$VERSION_BASE \
     --tag $IMAGE_PHP_BASE:$VERSION
 
