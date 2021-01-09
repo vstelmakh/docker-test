@@ -35,8 +35,6 @@ jobs:
                     echo "VERSION=$VERSION" >> $GITHUB_ENV
                     echo "VERSION_BASE=$VERSION_BASE" >> $GITHUB_ENV
                     echo "IS_IMAGE_PUSH=$IS_IMAGE_PUSH" >> $GITHUB_ENV
-                    echo "IMAGE_NGINX=$REGISTRY/$REPOSITORY/nginx" >> $GITHUB_ENV
-                    echo "IMAGE_PHP=$REGISTRY/$REPOSITORY/php" >> $GITHUB_ENV
                 # see: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-commands-for-github-actions#environment-files
 
             -   name: Git checkout
@@ -46,23 +44,8 @@ jobs:
                 run: echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | docker login $REGISTRY -u $GITHUB_ACTOR --password-stdin
                 # PERSONAL_ACCESS_TOKEN used as password to github registry. Secrets managed in repository configuration.
 
-            -   name: Build php
-                run: |
-                    docker pull $IMAGE_PHP:$VERSION_BASE || echo "Base image not found in registry"
-                    docker build . \
-                        --file docker/Dockerfile \
-                        --target php \
-                        --cache-from $IMAGE_PHP:$VERSION_BASE \
-                        --tag $IMAGE_PHP:$VERSION
-
-            -   name: Build nginx
-                run: |
-                    docker pull $IMAGE_NGINX:$VERSION_BASE || echo "Base image not found in registry"
-                    docker build . \
-                        --file docker/Dockerfile \
-                        --target nginx \
-                        --cache-from $IMAGE_NGINX:$VERSION_BASE \
-                        --tag $IMAGE_NGINX:$VERSION
+            -   name: Build images
+                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE
 
             -   name: List images
                 run: docker images
@@ -81,6 +64,4 @@ jobs:
 
             -   name: Push images (${{ env.VERSION }})
                 if: env.IS_IMAGE_PUSH == 'true'
-                run: |
-                    docker push $IMAGE_PHP:$VERSION
-                    docker push $IMAGE_NGINX:$VERSION
+                run: docker-compose push

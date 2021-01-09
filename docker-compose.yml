@@ -2,22 +2,14 @@ version: "3.4"
 
 services:
     php:
-        build:
-            context: .
-            dockerfile: ./docker/Dockerfile
-            target: php
-        # Image env variables defined in build workflow
-        image: $IMAGE_PHP:$VERSION
+        image: ghcr.io/vstelmakh/docker-test/php_prod
         environment:
             - TZ
 
     nginx:
-        build:
-            context: .
-            dockerfile: ./docker/Dockerfile
-            target: nginx
-        # Image env variables defined in build workflow
-        image: $IMAGE_NGINX:$VERSION
+        image: ghcr.io/vstelmakh/docker-test/nginx
+        depends_on:
+            - php
         ports:
             - 80:80
         environment:
