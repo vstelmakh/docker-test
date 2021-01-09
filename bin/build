@@ -13,6 +13,7 @@ VERSION=latest
 if [[ -z $UID ]]; then
     UID=1000
 fi
+IS_PUSH=false
 
 # Help
 function print_help() {
@@ -30,6 +31,7 @@ Options:
   -b, --version-base  Set base version to use cache from (default: $VERSION_BASE)
   -r, --repository    Set container repository url (default: $REPOSITORY)
   -u, --uid           Set host UID for proper permissions of synced files (default: $UID)
+      --push          Push images to repository (push existent images, NO build will happen)
   -h, --help          Display this help message
 HEREDOC
 }
@@ -41,7 +43,8 @@ while [[ "$#" -gt 0 ]]; do
         -b|--version-base) VERSION_BASE=$2; shift ;;
         -v|--version) VERSION=$2; shift ;;
         -u|--uid) UID=$2; shift ;;
-        -h|--help) print_help; exit 0; ;;
+        --push) IS_PUSH=true ;;
+        -h|--help) print_help; exit 0 ;;
         *) echo "Unexpected option: $1"; exit 1 ;;
     esac
     shift
@@ -53,6 +56,23 @@ IMAGE_PHP_PROD=$REPOSITORY/php_prod
 IMAGE_PHP_DEV=$REPOSITORY/php_dev
 IMAGE_NGINX=$REPOSITORY/nginx
 
+# Push
+if [[ $IS_PUSH == 'true' ]]; then
+    echo "Pushing PHP (base)"
+    docker push $IMAGE_PHP_BASE:$VERSION
+    echo
+    echo "Pushing PHP (prod)"
+    docker push $IMAGE_PHP_PROD:$VERSION
+    echo
+    echo "Pushing PHP (dev)"
+    docker push $IMAGE_PHP_DEV:$VERSION
+    echo
+    echo "Pushing Nginx"
+    docker push $IMAGE_NGINX:$VERSION
+    exit 0
+fi
+
+# Build
 cat << HEREDOC
 Building docker images
 
@@ -72,6 +92,8 @@ HEREDOC
 # See https://pythonspeed.com/articles/faster-multi-stage-builds/ for details
 
 # Build php base image
+echo "# PHP (base)"
+docker pull $IMAGE_PHP_BASE:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_BASE:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
     --target php \
@@ -79,11 +101,13 @@ docker build . \
     --tag $IMAGE_PHP_BASE:$VERSION
 
 # Install composer dependencies and sync to host
+echo "# Composer"
 docker run --rm -e UID=$UID -v $PWD/app:/app $IMAGE_PHP_BASE:$VERSION bash -c "\
     usermod -u \$UID -s /bin/bash www-data \
     && su www-data -c 'composer install --prefer-dist --no-progress --no-interaction --no-scripts --no-autoloader'"
 
 # Build php production image
+echo "# PHP (prod)"
 docker pull $IMAGE_PHP_PROD:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_PROD:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
@@ -93,6 +117,7 @@ docker build . \
     --tag $IMAGE_PHP_PROD:$VERSION
 
 # Build php dev image
+echo "# PHP (dev)"
 docker pull $IMAGE_PHP_DEV:$VERSION_BASE || echo "Base image \"$IMAGE_PHP_DEV:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/php/Dockerfile \
@@ -103,6 +128,7 @@ docker build . \
     --tag $IMAGE_PHP_DEV:$VERSION
 
 # Build nginx image
+echo "# Nginx"
 docker pull $IMAGE_NGINX:$VERSION_BASE || echo "Base image \"$IMAGE_NGINX:$VERSION_BASE\" not found in registry"
 docker build . \
     --file docker/nginx/Dockerfile \

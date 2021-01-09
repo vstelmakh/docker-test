@@ -64,4 +64,4 @@ jobs:
 
             -   name: Push images (${{ env.VERSION }})
                 if: env.IS_IMAGE_PUSH == 'true'
-                run: docker-compose push
+                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE --push
