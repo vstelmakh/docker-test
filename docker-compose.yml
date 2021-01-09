@@ -2,12 +2,12 @@ version: "3.4"
 
 services:
     php:
-        image: ghcr.io/vstelmakh/docker-test/php_prod
+        image: ghcr.io/vstelmakh/docker-test/php_prod:${VERSION:-latest}
         environment:
             - TZ
 
     nginx:
-        image: ghcr.io/vstelmakh/docker-test/nginx
+        image: ghcr.io/vstelmakh/docker-test/nginx:${VERSION:-latest}
         depends_on:
             - php
         ports:
