@@ -1,0 +1,6 @@
+/.idea/
+
+/.env
+/var/
+/app/var
+/app/vendor
