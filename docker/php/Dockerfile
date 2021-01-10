@@ -32,10 +32,8 @@ RUN composer install --prefer-dist --no-progress --no-interaction --no-dev --opt
 
 FROM php_base AS php_dev
 
-RUN touch test.txt
+RUN echo -n "Long running process..." \
+    && sleep 10 \
+    && echo " done"
 
-COPY --chown=www-data:www-data ./app /app
-
-RUN composer install --prefer-dist --no-progress --no-interaction \
-    && chown -R www-data:www-data /app/vendor
-
+# No files needed in dev image as bind mount will be used

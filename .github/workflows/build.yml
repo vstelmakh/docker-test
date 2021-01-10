@@ -62,6 +62,7 @@ jobs:
 
             -   name: Test
                 run: |
+                    docker-compose exec -T php bash -c "ls -la"
                     if curl -s http://localhost/ | grep -q "It works!"; then
                         echo "OK"
                     else
