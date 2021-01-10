@@ -1,0 +1,12 @@
+version: "3.4"
+
+# Development environment override
+services:
+    php:
+        image: ghcr.io/vstelmakh/docker-test/php_dev:${VERSION:-latest}
+        volumes:
+            - ./app:/app:rw,cached
+
+    nginx:
+        volumes:
+            - ./app/public:/app/public:ro
