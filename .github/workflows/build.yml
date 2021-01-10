@@ -52,7 +52,7 @@ jobs:
                 # PERSONAL_ACCESS_TOKEN used as password to github registry. Secrets managed in repository configuration.
 
             -   name: Build images
-                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE
+                run: ./bin/docker build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE
 
             -   name: List images
                 run: docker images
@@ -72,4 +72,4 @@ jobs:
 
             -   name: Push images (${{ env.VERSION }})
                 if: env.IS_IMAGE_PUSH == 'true'
-                run: bin/build -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE --push
+                run: ./bin/docker push -r $REGISTRY/$REPOSITORY -v $VERSION -b $VERSION_BASE
